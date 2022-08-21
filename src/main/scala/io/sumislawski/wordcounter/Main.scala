@@ -1,31 +1,52 @@
 package io.sumislawski.wordcounter
 
-import cats.effect.{ExitCode, IO, IOApp, Resource}
+import cats.data.ValidatedNel
+import cats.effect.{ExitCode, IO, Resource}
 import cats.syntax.all._
+import com.comcast.ip4s.{IpLiteralSyntax, Port}
+import com.monovore.decline.effect.CommandIOApp
+import com.monovore.decline.{Argument, Opts}
 import io.sumislawski.wordcounter.core.WordCounter
 import io.sumislawski.wordcounter.infrastructure.eventsource.ExecutableFileEventSource
 import io.sumislawski.wordcounter.infrastructure.httpapi.{HttpServer, WordCounterRoutes}
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
-import java.net.InetSocketAddress
-import scala.concurrent.duration.DurationInt
+import java.nio.file.Path
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
-object Main extends IOApp {
+object Main extends CommandIOApp(
+  name = "word-counter",
+  header = "Word counter"
+) {
 
   private val logger = Slf4jLogger.getLogger[IO]
 
-  override def run(args: List[String]): IO[ExitCode] = for {
-    _ <- logger.info("Starting word counter.")
-    customBindAddress <- args.headOption.traverse(s => IO(new InetSocketAddress(s.toInt)))
-    bindAddress = customBindAddress.getOrElse(new InetSocketAddress(80))
-    _ <- service(bindAddress).useForever
-  } yield ExitCode.Success
 
-  private def service(bindAddress: InetSocketAddress): Resource[IO, Unit] = for {
-    eventSource <- Resource.pure(new ExecutableFileEventSource[IO]("blackbox/blackbox.win.exe"))
-    wordCounter <- WordCounter[IO](eventSource, timeWindow = 15.seconds)
+  override def main: Opts[IO[ExitCode]] = {
+    (
+      Opts.argument[Path]("executable file path"),
+      Opts.option[FiniteDuration]("timeWindow", "Length of the time window in which the words are counted", short = "w").withDefault(15.seconds),
+      Opts.option[Port]("httpPort", "TCP port for the HTTP server to listen on", "p").withDefault(port"80"),
+      ).mapN { (executableFilePath, timeWindow, httpPort) =>
+      for {
+        _ <- logger.info("Starting word counter.")
+        _ <- service(executableFilePath, timeWindow, httpPort).useForever
+      } yield ExitCode.Success
+    }
+  }
+
+  private def service(executableFilePath: Path, timeWindow: FiniteDuration, httpPort: Port): Resource[IO, Unit] = for {
+    eventSource <- Resource.pure(new ExecutableFileEventSource[IO](executableFilePath))
+    wordCounter <- WordCounter[IO](eventSource, timeWindow = timeWindow)
     routes <- Resource.pure(new WordCounterRoutes[IO](wordCounter))
-    _ <- HttpServer[IO](routes.routes, bindAddress)
+    _ <- HttpServer[IO](routes.routes, httpPort)
   } yield ()
+
+  private implicit val portArgument: Argument[Port] = new Argument[Port] {
+    override def read(string: String): ValidatedNel[String, Port] =
+      Port.fromString(string).toValidNel(s"Invalid port: $string")
+
+    override def defaultMetavar: String = "port"
+  }
 
 }

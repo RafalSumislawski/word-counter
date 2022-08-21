@@ -11,9 +11,10 @@ import io.sumislawski.wordcounter.core.{Event, EventSource, EventType, Timestamp
 import io.sumislawski.wordcounter.infrastructure.eventsource.ExecutableFileEventSource._
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
+import java.nio.file.Path
 import scala.annotation.unused
 
-class ExecutableFileEventSource[F[_] : Async](executableFilePath: String) extends EventSource[F] {
+class ExecutableFileEventSource[F[_] : Async](executableFilePath: Path) extends EventSource[F] {
 
   private val logger = Slf4jLogger.getLogger[F]
 
@@ -24,13 +25,13 @@ class ExecutableFileEventSource[F[_] : Async](executableFilePath: String) extend
   private implicit val runner: ProcessRunner[JVMProcessInfo] = new JVMProcessRunner
 
   override def events: fs2.Stream[F, Event] = for {
-    eventQueue <- fs2.Stream.resource(executeProcess(executableFilePath))
+    eventQueue <- fs2.Stream.resource(executeProcess())
     event <- fs2.Stream.fromQueueUnterminated(eventQueue)
   } yield event
 
-  private def executeProcess(command: String): Resource[F, Queue[F, Event]] = for {
+  private def executeProcess(): Resource[F, Queue[F, Event]] = for {
     eventQueue <- Resource.eval(Queue.bounded[F, Event](1024))
-    _ <- Process(command)
+    _ <- Process(executableFilePath.toString)
       .connectOutput(OutputStreamToSink(s => processOutput(s).enqueueUnterminated(eventQueue)))
       .start()
   } yield eventQueue

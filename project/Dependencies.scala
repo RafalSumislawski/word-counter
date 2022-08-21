@@ -1,6 +1,6 @@
 import sbt._
 
-object Dependencies{
+object Dependencies {
   object logging {
     val log4jVersion = "2.18.0"
     val log4jApi = "org.apache.logging.log4j" % "log4j-api" % log4jVersion
@@ -38,6 +38,8 @@ object Dependencies{
   val fs2Io = "co.fs2" %% "fs2-io" % "3.2.12"
 
   val prox = "io.github.vigoo" %% "prox-fs2-3" % "0.7.8"
+
+  val decline = "com.monovore" %% "decline-effect" % "2.3.0"
 
   object scalaTest {
     val scalaTest = "org.scalatest" %% "scalatest" % "3.2.13"
