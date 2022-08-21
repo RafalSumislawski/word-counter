@@ -13,7 +13,8 @@ object Dependencies{
   object cats {
     val catsCore = "org.typelevel" %% "cats-core" % "2.8.0"
     val catsEffect = "org.typelevel" %% "cats-effect" % "3.3.14"
-    val all = Vector(catsCore, catsEffect)
+    val catsEffectTestkit = "org.typelevel" %% "cats-effect-testkit" % "3.3.14"
+    val all = Vector(catsCore, catsEffect, catsEffectTestkit % Test)
   }
 
   object circe {

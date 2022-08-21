@@ -59,6 +59,6 @@ object ExecutableFileEventSource {
 
   implicit val eventTypeDecoder: Decoder[EventType] = Decoder.decodeString.map(EventType)
 
-  implicit val timestampDecoder: Decoder[Timestamp] = Decoder.decodeLong.map(Timestamp)
+  implicit val timestampDecoder: Decoder[Timestamp] = Decoder.decodeLong.map(Timestamp(_))
 
 }
