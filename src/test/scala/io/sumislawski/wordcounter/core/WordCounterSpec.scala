@@ -70,7 +70,7 @@ class WordCounterSpec extends AsyncFunSuite with AsyncIOSpec with Matchers {
 
   private def wordCounterWithMockedEventSource(timeWindow: FiniteDuration, events: Event*): Resource[IO, WordCounter[IO]] = for {
     eventSource <- eventSourceStub(events: _*)
-    wordCounter <- WordCounter[IO](eventSource, 5.seconds)
+    wordCounter <- WordCounter[IO](eventSource, timeWindow)
   } yield wordCounter
 
   private def eventSourceStub(plannedEvents: Event*): Resource[IO, EventSource[IO]] = {

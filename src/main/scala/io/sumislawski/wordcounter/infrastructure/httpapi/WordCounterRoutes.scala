@@ -2,6 +2,7 @@ package io.sumislawski.wordcounter.infrastructure.httpapi
 
 import cats.Monad
 import cats.syntax.all._
+import io.circe.generic.semiauto.deriveEncoder
 import io.circe.{Encoder, KeyEncoder}
 import io.sumislawski.wordcounter.core.{EventType, WordCounter}
 import io.sumislawski.wordcounter.infrastructure.httpapi.WordCounterRoutes._
@@ -14,12 +15,16 @@ class WordCounterRoutes[F[_] : Monad](wordCounter: WordCounter[F]) extends Http4
     org.http4s.circe.jsonEncoderOf[F, A]
 
   def routes: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root =>
+    case GET -> Root / "wordCount" =>
       wordCounter.getWordCountByEventInTimeWindow()
-        .flatMap(Ok(_))
+        .flatMap(counts => Ok(WordCountResponse(counts)))
   }
 }
 
 object WordCounterRoutes {
-  implicit val eventTypeKeyEncoder: KeyEncoder[EventType] = KeyEncoder.encodeKeyString.contramap[EventType](_.toString)
+  case class WordCountResponse(wordCountByEventType: Map[EventType, Long])
+
+  implicit lazy val wordCountResponseEncoder: Encoder[WordCountResponse] = deriveEncoder
+
+  implicit lazy val eventTypeKeyEncoder: KeyEncoder[EventType] = KeyEncoder.encodeKeyString.contramap[EventType](_.toString)
 }

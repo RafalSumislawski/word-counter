@@ -11,6 +11,8 @@ import io.sumislawski.wordcounter.core.{Event, EventSource, EventType, Timestamp
 import io.sumislawski.wordcounter.infrastructure.eventsource.ExecutableFileEventSource._
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
+import scala.annotation.unused
+
 class ExecutableFileEventSource[F[_] : Async](executableFilePath: String) extends EventSource[F] {
 
   private val logger = Slf4jLogger.getLogger[F]
@@ -53,12 +55,13 @@ class ExecutableFileEventSource[F[_] : Async](executableFilePath: String) extend
 
 object ExecutableFileEventSource {
 
+  @unused // It is used (by deriveConfiguredDecoder), but the compiler doesn't understand that so we need to suppress the warning
   private implicit val circeConfiguration: Configuration = Configuration.default.withSnakeCaseMemberNames
 
-  implicit val eventDecoder: Decoder[Event] = deriveConfiguredDecoder
+  implicit lazy val eventDecoder: Decoder[Event] = deriveConfiguredDecoder
 
-  implicit val eventTypeDecoder: Decoder[EventType] = Decoder.decodeString.map(EventType)
+  implicit lazy val eventTypeDecoder: Decoder[EventType] = Decoder.decodeString.map(EventType)
 
-  implicit val timestampDecoder: Decoder[Timestamp] = Decoder.decodeLong.map(Timestamp(_))
+  implicit lazy val timestampDecoder: Decoder[Timestamp] = Decoder.decodeLong.map(Timestamp(_))
 
 }
