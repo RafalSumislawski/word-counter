@@ -14,10 +14,10 @@ class WordCounterSpec extends AsyncFunSuite with AsyncIOSpec with Matchers {
     TestControl.executeEmbed(
       wordCounterWithMockedEventSource(timeWindow = 5.seconds,
         Event(EventType("type1"), " word1, word2\tword3; this-is-one-word4\nword5    word6\r\n", Timestamp(0L)),
-      ).use{ wordCounter =>
+      ).use { wordCounter =>
         IO.sleep(1.seconds) >>
           wordCounter.getWordCountByEventInTimeWindow()
-            .asserting(_ shouldEqual Map("type1" -> 6L))
+            .asserting(_ shouldEqual Map(EventType("type1") -> 6L))
       }
     )
   }
@@ -30,7 +30,7 @@ class WordCounterSpec extends AsyncFunSuite with AsyncIOSpec with Matchers {
       ).use { wordCounter =>
         IO.sleep(1.seconds) >>
           wordCounter.getWordCountByEventInTimeWindow()
-            .asserting(_ shouldEqual Map("type1" -> 3L))
+            .asserting(_ shouldEqual Map(EventType("type1") -> 3L))
       }
     )
   }
@@ -46,9 +46,9 @@ class WordCounterSpec extends AsyncFunSuite with AsyncIOSpec with Matchers {
         IO.sleep(1.seconds) >>
           wordCounter.getWordCountByEventInTimeWindow()
             .asserting(_ shouldEqual Map(
-              "type1" -> 3L,
-              "type2" -> 1L,
-              "type3" -> 4L,
+              EventType("type1") -> 3L,
+              EventType("type2") -> 1L,
+              EventType("type3") -> 4L,
             ))
       }
     )
@@ -63,13 +63,13 @@ class WordCounterSpec extends AsyncFunSuite with AsyncIOSpec with Matchers {
       ).use { wordCounter =>
         IO.sleep(7.seconds) >>
           wordCounter.getWordCountByEventInTimeWindow()
-            .asserting(_ shouldEqual Map("type1" -> 2L))
+            .asserting(_ shouldEqual Map(EventType("type1") -> 2L))
       }
     )
   }
 
   private def wordCounterWithMockedEventSource(timeWindow: FiniteDuration, events: Event*): Resource[IO, WordCounter[IO]] = for {
-    eventSource <- eventSourceStub(events:_*)
+    eventSource <- eventSourceStub(events: _*)
     wordCounter <- WordCounter[IO](eventSource, 5.seconds)
   } yield wordCounter
 
