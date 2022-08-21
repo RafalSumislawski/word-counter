@@ -22,7 +22,7 @@ object Main extends IOApp {
   } yield ExitCode.Success
 
   private def service(bindAddress: InetSocketAddress): Resource[IO, Unit] = for {
-    eventSource <- Resource.pure(new ExecutableFileEventSource[IO]())
+    eventSource <- Resource.pure(new ExecutableFileEventSource[IO]("blackbox/blackbox.win.exe"))
     wordCounter <- WordCounter[IO](eventSource, timeWindow = 15.seconds)
     routes <- Resource.pure(new WordCounterRoutes[IO](wordCounter))
     _ <- HttpServer[IO](routes.routes, bindAddress)

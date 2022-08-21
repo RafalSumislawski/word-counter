@@ -2,6 +2,7 @@ package io.sumislawski.wordcounter.core
 
 import cats.Applicative
 import cats.effect.{Async, Resource}
+import cats.effect.syntax.all._
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -14,6 +15,6 @@ class WordCounter[F[_] : Applicative] {
 
 object WordCounter {
   def apply[F[_] : Async](eventSource: EventSource[F], timeWindow: FiniteDuration): Resource[F, WordCounter[F]] = for {
-    _ <- Resource.unit[F]
+    _ <- eventSource.events.compile.drain.background // TODO process the events
   } yield new WordCounter[F]
 }

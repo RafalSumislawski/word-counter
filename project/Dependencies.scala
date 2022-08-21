@@ -19,9 +19,10 @@ object Dependencies{
   object circe {
     val circeVersion = "0.14.2"
     val circeGeneric = "io.circe" %% "circe-generic" % circeVersion
+    val circeGenericExtras = "io.circe" %% "circe-generic-extras" % circeVersion
     val circeParser = "io.circe" %% "circe-parser" % circeVersion
     val circeLiteral = "io.circe" %% "circe-literal" % circeVersion
-    val all = Vector(circeGeneric, circeParser, circeLiteral)
+    val all = Vector(circeGeneric, circeGenericExtras, circeParser, circeLiteral)
   }
 
   object http4s {
@@ -34,6 +35,8 @@ object Dependencies{
   }
 
   val fs2Io = "co.fs2" %% "fs2-io" % "3.2.12"
+
+  val prox = "io.github.vigoo" %% "prox-fs2-3" % "0.7.8"
 
   object scalaTest {
     val scalaTest = "org.scalatest" %% "scalatest" % "3.2.13"
